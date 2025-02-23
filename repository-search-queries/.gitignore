@@ -1,0 +1,6 @@
+*.nupkg
+test*.nuspec
+dep*.nuspec
+!dependencies.nuspec
+!template.nuspec
+.vagrant

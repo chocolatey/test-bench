@@ -1,0 +1,57 @@
+services:
+  nexus:
+    image: sonatype/nexus3:${NEXUS_VERSION}
+    ports:
+      # Defaults port 9000 available
+      - 9000:8081
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD-SHELL", "cat /nexus-data/password.admin || cp /nexus-data/admin.password /nexus-data/password.admin || exit 1"]
+      interval: 5s
+      retries: 20
+      start_period: 10s
+      timeout: 3s
+
+  artifactory:
+    image: releases-docker.jfrog.io/jfrog/artifactory-pro:${ARTIFACTORY_VERSION}
+    ports:
+      # Defaults port 9001 available for the repository and 9002 for "Admin"
+      - 8081:8081
+      - 8082:8082
+    environment:
+      - TZ=UTC
+
+  sql:
+    image: mcr.microsoft.com/mssql/server:${SQL_VERSION}
+    container_name: sql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=SuperS3cret
+      - MSSQL_PID=Express
+    restart: unless-stopped
+    healthcheck:
+      # Information for future selves:
+      # If the health check fails, you can run the command at the command line as `docker compose exec sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SuperS3cret -Q 'create database [ProGet] collate sql_Latin1_general_cp1_ci_as'`
+      # That is, the CMD-SHELL without the quotes or the exit 1...
+      # The sqlcmd executable used to be in /opt/mssql-tools. At some point this added 18. If the health check fails, this may be where to look...
+      # -C tells sqlcmd to trust the server certificate. This is needed in newer versions of SQL Server that encrypt by default.
+      # -S is the server, -U is the username, -P is the password.
+      # -Q is the query to execute. This is what creates the ProGet database. It will exit 0 even if it fails to create the database, which is why we use it.
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SuperS3cret -Q 'create database [ProGet] collate sql_Latin1_general_cp1_ci_as' || exit 1"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+      timeout: 3s
+
+  proget:
+    image: proget.inedo.com/productimages/inedo/proget:${PROGET_VERSION}
+    restart: unless-stopped
+    ports:
+      # Defaults port 9003 available
+      - 9003:80
+    environment:
+      - PROGET_SQL_CONNECTION_STRING=Data Source=sql; Initial Catalog=ProGet; User ID=sa; Password=SuperS3cret; TrustServerCertificate=True
+    depends_on:
+      sql:
+        condition: service_healthy
