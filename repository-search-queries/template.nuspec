@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>[[ID]]</id>
+    <version>$version$</version>
+    <title>test (Install)</title>
+    <authors>authors</authors>
+    <tags>test</tags>
+    <summary></summary>
+    <description>descriptiodescriptiodescriptiodescriptiodescriptionnnnn</description>
+    <projectUrl>https://example.com</projectUrl>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
